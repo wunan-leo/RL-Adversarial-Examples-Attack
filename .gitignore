@@ -7,7 +7,8 @@ __pycache__/
 *.so
 
 # Distribution / packaging
-.Python
+.Python\
+.idea/
 build/
 develop-eggs/
 dist/
@@ -130,3 +131,4 @@ dmypy.json
 
 ## C&W 
 Adv-Attack-Algorithm/C&W/.idea/*
+Test/data/
