@@ -8,11 +8,14 @@
 # import torch
 # from torch.autograd import Variable
 # from torchvision import utils
+from PIL import Image
+from torchvision import transforms
+import matplotlib.pyplot as plt
 import numpy as np
 import random
 import time
 import os
-
+import torch
 from DataSets import setup_mnist  # MNISTModel
 from Models import lenet
 from Attack import CarliniL2
@@ -102,11 +105,11 @@ def run(samples=10, targeted=True, attack_type='l2'):
     # add algorithm configuration as the param : config.
     start = 1
     inception = False
-
+    model_path = r'..\Models\models\mnist.pth'
     # prepare the data and model for attack, use param : model
     data = setup_mnist.MNIST()
     model = lenet.LeNet()
-
+    model.load_state_dict(torch.load(model_path))
     # prepare attack and inputs data.
     attack = create_attack(model, attack_type=attack_type)
     inputs, targets = generate_data(data, samples=samples, targeted=targeted,
@@ -117,13 +120,17 @@ def run(samples=10, targeted=True, attack_type='l2'):
     adv = attack.attack(inputs, targets)
     timeEnd = time.time()
     print("Took", timeEnd - timeStart, "seconds to run", len(inputs), "samples.")
-
+    adv_img = np.transpose(adv, [0, 3, 1, 2])
     # evaluation
     for i in range(len(adv)):
         print("Adversarial:")
         show(adv[i])
         print("target class: ", np.argmax(targets[i]))
-        # print("Classification:", model.model.predict(adv[i:i + 1]))
+
+        outputs = model(torch.tensor(adv_img[i:i+1]))
+        predict = torch.max(outputs, dim=1)[1].data.numpy()
+        print("predict class: ", np.argmax(predict))
+        print("Classification:", predict)
         print("Total distortion:", np.sum((adv[i] - inputs[i]) ** 2) ** .5)
 
 

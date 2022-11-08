@@ -132,3 +132,7 @@ dmypy.json
 ## C&W 
 Adv-Attack-Algorithm/C&W/.idea/*
 Test/data/*
+
+#Model and data
+Models/models/*
+Models/data/*

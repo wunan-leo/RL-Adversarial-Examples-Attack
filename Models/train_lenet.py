@@ -25,13 +25,13 @@ parser.add_argument('--batch-size', type=int, default=64, metavar='N',
                     help='input batch size for training (default: 64)')
 parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                     help='input batch size for testing (default: 1000)')
-parser.add_argument('--epochs', type=int, default=20, metavar='N',
+parser.add_argument('--epochs', type=int, default=3, metavar='N',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                     help='learning rate (default: 0.01)')
 parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                     help='SGD momentum (default: 0.5)')
-parser.add_argument('--no-cuda', action='store_true', default=False,
+parser.add_argument('--no-cuda', action='store_true', default=True,
                     help='disables CUDA training')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
@@ -42,7 +42,7 @@ parser.add_argument('--model-path', type=str, default='./models/mnist.pth', meta
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
-args.is_variational = not args.no_vmodel
+args.is_variational = False
 
 torch.manual_seed(args.seed)
 if args.cuda:
@@ -93,7 +93,7 @@ def train(epoch):
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} norm: {:.4f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                       100. * batch_idx / len(train_loader), loss.data[0], batch_norm))
+                       100. * batch_idx / len(train_loader), loss.item(), batch_norm))
 
 
 def test(epoch):
@@ -109,7 +109,7 @@ def test(epoch):
         output = model(data)
         # sum up batch loss
         test_loss += F.cross_entropy(output, target,
-                                     size_average=False).data[0]
+                                     size_average=False).item()
         # get the index of the max log-probability
         pred = output.data.max(1)[1]
         correct += pred.eq(target.data).cpu().sum()
