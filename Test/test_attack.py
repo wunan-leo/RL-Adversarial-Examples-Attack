@@ -12,6 +12,7 @@ from PIL import Image
 from torchvision import transforms
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import random
 import time
 import os
@@ -19,6 +20,7 @@ import torch
 from DataSets import setup_mnist  # MNISTModel
 from Models import lenet
 from Attack import CarliniL2
+from Evaluation import evaluation
 
 import logging
 
@@ -53,6 +55,7 @@ def generate_data(data, samples, targeted=True, start=0, inception=False):
     """
     inputs = []
     targets = []
+    origin_label = []
     for i in range(samples):
         if targeted:
             if inception:
@@ -65,14 +68,17 @@ def generate_data(data, samples, targeted=True, start=0, inception=False):
                     continue
                 inputs.append(data.test_data[start + i])
                 targets.append(np.eye(data.test_labels.shape[1])[j])
+                origin_label.append(data.test_labels[start + i])
         else:
             inputs.append(data.test_data[start + i])
             targets.append(data.test_labels[start + i])
+            origin_label.append(data.test_labels[start + i])
 
     inputs = np.array(inputs)
     targets = np.array(targets)
+    origin_label = np.array(origin_label)
 
-    return inputs, targets
+    return inputs, targets, origin_label
 
 
 def distortion(a, b, norm_type='l2'):
@@ -103,7 +109,7 @@ def create_attack(model, attack_type='l2'):
 
 def run(samples=10, targeted=True, attack_type='l2'):
     # add algorithm configuration as the param : config.
-    start = 1
+    start = 5
     inception = False
     model_path = r'..\Models\models\mnist.pth'
     # prepare the data and model for attack, use param : model
@@ -112,7 +118,7 @@ def run(samples=10, targeted=True, attack_type='l2'):
     model.load_state_dict(torch.load(model_path))
     # prepare attack and inputs data.
     attack = create_attack(model, attack_type=attack_type)
-    inputs, targets = generate_data(data, samples=samples, targeted=targeted,
+    inputs, targets, origin_label = generate_data(data, samples=samples, targeted=targeted,
                                     start=start, inception=inception)
 
     # attack
@@ -121,6 +127,7 @@ def run(samples=10, targeted=True, attack_type='l2'):
     timeEnd = time.time()
     print("Took", timeEnd - timeStart, "seconds to run", len(inputs), "samples.")
     adv_img = np.transpose(adv, [0, 3, 1, 2])
+    predicts = []
     # evaluation
     for i in range(len(adv)):
         print("Adversarial:")
@@ -129,10 +136,16 @@ def run(samples=10, targeted=True, attack_type='l2'):
 
         outputs = model(torch.tensor(adv_img[i:i+1]))
         predict = torch.max(outputs, dim=1)[1].data.numpy()
-        print("predict class: ", np.argmax(predict))
+        predicts.append(outputs.detach().numpy()[0])
+        print(outputs.detach().numpy())
         print("Classification:", predict)
         print("Total distortion:", np.sum((adv[i] - inputs[i]) ** 2) ** .5)
 
+    # evaluation with the indicator
+    print('--------evaluation----------')
+    evalue = evaluation.Evaluation(inputs, adv, origin_label, targets, np.array(predicts), True)
+    print("Evaluation indicator:")
+    print(evalue.evaluation())
 
 if __name__ == "__main__":
     run(samples=1, targeted=True, attack_type='l2')
