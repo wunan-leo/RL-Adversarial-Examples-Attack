@@ -6,8 +6,24 @@ from CNN import CNNModel
 
 from DataSets import setup_fasionmnist
 
+'''
+自行下载fashion-mnist数据集，放在/Test/data/fashion-mnist/data/fashion中
+'''
 train_dataset = setup_fasionmnist.FashionMNISTDataset(root_dir="../Test/data/fashion-mnist/data/fashion/")
 test_dataset = setup_fasionmnist.FashionMNISTDataset(root_dir="../Test/data/fashion-mnist/data/fashion/", train=False)
+'''
+import torchvision
+trainset = torchvision.datasets.FashionMNIST(root='./data', train=True,
+                                             download=False)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=100,
+                                          shuffle=True, num_workers=2)
+
+testset = torchvision.datasets.FashionMNIST(root='./data', train=False,
+                                            download=False)  # 第一次ture后面就不用下载，改为false
+testloader = torch.utils.data.DataLoader(testset, batch_size=50,
+                                         shuffle=False, num_workers=2)
+可以利用pytorch提供的dataset里面下载，不用上面那么多
+'''
 
 batch_size = 100
 n_iters = 18000
