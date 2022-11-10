@@ -134,14 +134,11 @@ class Evaluation():
         adv_r_channel = np.transpose(np.round(self.adv_input.numpy() * 255), (0, 2, 3, 1)).astype(dtype=np.float32)
         totalSSIM = 0
         number = 0
-        predicts = list()
         outputs = torch.from_numpy(self.adv_prediction)
         preds = torch.argmax(outputs, 1)
         preds = preds.data.numpy()
-        predicts.extend(preds)
-        labels = self.target_label.numpy()
-        for i in range(len(predicts)):
-            if predicts[i] != labels[i]:
+        for i in range(len(preds)):
+            if preds[i] != np.argmax(self.origin_label[i]):
                 number += 1
                 totalSSIM += SSIM(X=ori_r_channel[i], Y=adv_r_channel[i], multichannel=True)
                 print(SSIM(X=ori_r_channel[i], Y=ori_r_channel[i], multichannel=True))
@@ -150,6 +147,35 @@ class Evaluation():
         else:
             ass = totalSSIM / (number + self.MIN_COMPENSATION)
         return ass
+
+    def nte(self):
+        total = len(self.adv_input)
+        print("total", total)
+        outputs = torch.from_numpy(self.adv_prediction)
+        number = 0
+        diff = 0
+        outputs_softmax=torch.nn.functional.softmax(outputs, dim=1)
+        preds = torch.argmax(outputs, 1)
+        outputs_softmax = outputs_softmax.data.numpy()
+        preds = preds.data.numpy()
+
+        if not self.is_targeted:
+            for i in range(preds.size):
+                if preds[i] != np.argmax(self.origin_label[i]):
+                    number += 1
+                    sort_preds = np.sort(outputs_softmax[i])
+                    diff += sort_preds[-1] - sort_preds[-2]
+        else:
+            for i in range(preds.size):
+                if preds[i] == np.argmax(self.origin_label[i]):
+                    number += 1
+                    sort_preds = np.sort(outputs_softmax[i])
+                    diff += sort_preds[-1] - sort_preds[-2]
+        if not number==0:
+            nte = diff/number
+        else:
+            nte = diff / (number+self.MIN_COMPENSATION)
+        return nte
 
     def evaluation(self):
         indicator = {}
