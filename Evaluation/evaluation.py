@@ -9,6 +9,7 @@
 import numpy as np
 import pandas as pd
 import torch
+from skimage.metrics import structural_similarity as SSIM
 
 class Evaluation():
 
@@ -125,6 +126,30 @@ class Evaluation():
             aldp2 = dist_l2 / (number + self.MIN_COMPENSATION)
 
         return aldp2
+
+    def ass(self):
+        total = len(self.adv_input)
+        print("total", total)
+        ori_r_channel = np.transpose(np.round(self.origin_input.numpy() * 255), (0, 2, 3, 1)).astype(dtype=np.float32)
+        adv_r_channel = np.transpose(np.round(self.adv_input.numpy() * 255), (0, 2, 3, 1)).astype(dtype=np.float32)
+        totalSSIM = 0
+        number = 0
+        predicts = list()
+        outputs = torch.from_numpy(self.adv_prediction)
+        preds = torch.argmax(outputs, 1)
+        preds = preds.data.numpy()
+        predicts.extend(preds)
+        labels = self.target_label.numpy()
+        for i in range(len(predicts)):
+            if predicts[i] != labels[i]:
+                number += 1
+                totalSSIM += SSIM(X=ori_r_channel[i], Y=adv_r_channel[i], multichannel=True)
+                print(SSIM(X=ori_r_channel[i], Y=ori_r_channel[i], multichannel=True))
+        if not number==0:
+            ass = totalSSIM / number
+        else:
+            ass = totalSSIM / (number + self.MIN_COMPENSATION)
+        return ass
 
     def evaluation(self):
         indicator = {}
