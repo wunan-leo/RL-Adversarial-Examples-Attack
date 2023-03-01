@@ -27,11 +27,48 @@ class DQN(nn.Module):
         return self.nn(x)
 
 
+class CnnDQN(nn.Module):
+    def __init__(self, input_shape, num_actions, hidden_dim=64):
+        super(CnnDQN, self).__init__()
+
+        self.input_shape = input_shape
+        self.num_actions = num_actions
+
+        self.features = nn.Sequential(
+            self.makeLayer(self.input_shape[0], hidden_dim),
+            self.makeLayer(hidden_dim, hidden_dim * 2),
+            self.makeLayer(hidden_dim * 2, hidden_dim * 4)
+        )
+
+        self.fc = nn.Sequential(
+            nn.Linear(self.features_size(), 512),
+            nn.ReLU(),
+            nn.Linear(512, self.num_actions)
+        )
+
+    def makeLayer(self, input_channels, output_channels, kernel_size=4, stride=2):
+        return nn.Sequential(
+            nn.Conv2d(input_channels, output_channels, kernel_size, stride),
+            nn.BatchNorm2d(output_channels),
+            nn.ReLU(),
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc(x)
+        return x
+
+    def features_size(self):
+        return self.features(torch.zeros(1, *self.input_shape)).view(1, -1).size(1)
+
+
 class DQNAgent:
     def __init__(self, config: Config):
         self.config = config
         self.is_training = True
         self.buffer = ReplayBuffer(self.config.max_buff)
+        # self.model = CnnDQN(self.config.state_shape, self.config.action_dim)
         self.model = DQN(self.config.state_dim, self.config.action_dim)
         self.model_optim = Adam(self.model.parameters(), lr=self.config.learning_rate)
 
@@ -71,7 +108,7 @@ class DQNAgent:
             done = done.cuda()
 
         q_values = self.model(state)
-        next_q_values = self.model(state)
+        next_q_values = self.model(next_state)
         next_q_value = next_q_values.max(1)[0]
 
         q_value = q_values.gather(1, action.unsqueeze(1)).squeeze(1)
@@ -124,17 +161,16 @@ if __name__ == '__main__':
     config.log_interval = 200
     config.win_break = True
     config.alpha = 0.5
-    config.max_modify_num = 100
+    config.max_modify_num = 20
     config.action_dim = 14
     config.state_dim = 6 * 32 * 32
+    config.state_shape = [6, 32, 32]
     config.output = r'./models/'
 
     attacked_model = LeNet(in_channels=3, out_size=2048)
     attacked_model_path = r'./models/cifar10.pth'
     attacked_model.load_state_dict(torch.load(attacked_model_path))
-    env = AttackEnv(config.action_dim, config.state_dim, attacked_model, config.max_modify_num, config.alpha)
-    config.action_dim = env.action_space.n
-    config.state_dim = env.observation_space.shape[0]
+    env = AttackEnv(config, attacked_model)
     agent = DQNAgent(config)
 
     if args.train:

@@ -29,43 +29,45 @@ class Trainer:
 
         train_data, test_data = self.load_data()
         attack_success_num = 0
-        attack_num = 0
-        for batch_idx, (data, target) in enumerate(train_data):
-            state = self.env.resetEnv(data, target)
-            attack_num += 1
-            losses = []
-            all_rewards = []
-            episode_reward = 0
-            ep_num = 0
+        data_iter = iter(train_data)
+        data, target = next(data_iter)
+        state = self.env.resetEnv(data, target)
+        losses = []
+        all_rewards = []
+        episode_reward = 0
+        ep_num = 0
+        self.resetFrame()
+        for fr in range(pre_fr + 1, self.config.frames + 1):
 
-            self.resetFrame()
-            for fr in range(pre_fr + 1, self.config.frames + 1):
+            epsilon = self.epsilon_by_frame(fr)
+            action = self.agent.act(state, epsilon)
+            next_state, reward, done, _ = self.env.step(action)
+            self.agent.buffer.add(state, action, reward, next_state, done)
+            state = next_state
+            episode_reward += reward
 
-                epsilon = self.epsilon_by_frame(fr)
-                action = self.agent.act(state, epsilon)
-                next_state, reward, done, _ = self.env.step(action)
-                self.agent.buffer.add(state, action, reward, next_state, done)
-                state = next_state
-                episode_reward += reward
+            loss = 0
+            if self.agent.buffer.size() > self.config.batch_size:
+                loss = self.agent.learning(fr)
+                losses.append(loss)
 
-                loss = 0
-                if self.agent.buffer.size() > self.config.batch_size:
-                    loss = self.agent.learning(fr)
-                    losses.append(loss)
+            if done:
+                all_rewards.append(episode_reward)
+                data, target = next(data_iter)
 
-                if done:
-                    all_rewards.append(episode_reward)
-                    rewards = float(np.sum(all_rewards))
-                    if rewards > 0:
-                        attack_success_num += 1
-                    break
+                # attack success.
+                if episode_reward > 0:
+                    attack_success_num += 1
+                state = self.env.resetEnv(data, target)
+                episode_reward = 0
                 ep_num += 1
-            if attack_num % 250 == 0:
-                print('Ran %d episodes attack, successfully attack %d times, the accuracy of it is %.4f' % (
-                    attack_num, attack_success_num, attack_success_num / attack_num
+
+            if ep_num != 0 and ep_num % 250 == 0:
+                print('Ran %d episodes attack, successfully attack %d times, the accuracy of it is %.4f, ran fr %d' % (
+                    ep_num, attack_success_num, attack_success_num / ep_num, fr
                 ))
 
-        print('Ran %d attack episodes, and the accuracy is %.4f' % (attack_num, attack_success_num / attack_num))
+        print('Ran %d attack episodes, and the accuracy is %.4f' % (ep_num, attack_success_num / ep_num))
         self.agent.save_model(self.outputDir, 'dqn-attack')
 
     def load_data(self):

@@ -17,3 +17,4 @@ class Config:
     log_interval: None
     win_break: None
     output: None
+    state_shape: None
