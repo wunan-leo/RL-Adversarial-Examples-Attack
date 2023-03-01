@@ -9,7 +9,7 @@
 import numpy as np
 import pandas as pd
 import torch
-# from skimage.metrics import structural_similarity as SSIM
+from skimage.metrics import structural_similarity as SSIM
 
 class Evaluation():
 
