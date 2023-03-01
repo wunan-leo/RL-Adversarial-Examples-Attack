@@ -25,7 +25,7 @@ parser.add_argument('--batch-size', type=int, default=64, metavar='N',
                     help='input batch size for training (default: 64)')
 parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                     help='input batch size for testing (default: 1000)')
-parser.add_argument('--epochs', type=int, default=3, metavar='N',
+parser.add_argument('--epochs', type=int, default=15, metavar='N',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                     help='learning rate (default: 0.01)')
@@ -50,8 +50,13 @@ if args.cuda:
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
+cifar10_transform = transforms.Compose([
+    transforms.ToTensor(),  # numpy -> Tensor
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # 归一化 ，范围[-1,1]
+])
+
 train_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('./data/mnist', train=True, download=False,
+    datasets.MNIST('./data/', train=True, download=False,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
@@ -59,13 +64,24 @@ train_loader = torch.utils.data.DataLoader(
     batch_size=args.batch_size, shuffle=True, **kwargs)
 
 test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('./data/mnist', train=False, transform=transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])),
+    datasets.MNIST('./data/', train=False, download=False,
+                   transform=transforms.Compose([
+                       transforms.ToTensor(),
+                       transforms.Normalize((0.1307,), (0.3081,))
+                   ])),
     batch_size=args.batch_size, shuffle=True, **kwargs)
 
-model = LeNet()
+cifar10_train_loader = torch.utils.data.DataLoader(
+    datasets.CIFAR10('./data/', train=True, download=True,
+                     transform=cifar10_transform),
+    batch_size=args.batch_size, shuffle=True, **kwargs)
+
+cifar10_test_loader = torch.utils.data.DataLoader(
+    datasets.CIFAR10('./data/', train=False, download=True,
+                     transform=cifar10_transform),
+    batch_size=args.batch_size, shuffle=True, **kwargs)
+
+model = LeNet(in_channels=3, out_size=2048)
 
 if args.cuda:
     model.cuda()
@@ -77,7 +93,7 @@ scheduler = MultiStepLR(optimizer, milestones=[10, 15], gamma=0.1)
 def train(epoch):
     model.train()
 
-    for batch_idx, (data, target) in enumerate(train_loader):
+    for batch_idx, (data, target) in enumerate(cifar10_train_loader):
         if args.cuda:
             data, target = data.cuda(), target.cuda()
             centers = centers.cuda()
@@ -88,12 +104,12 @@ def train(epoch):
         loss.backward()
         batch_norm = torch.nn.utils.clip_grad_norm(model.parameters(), 20, norm_type=2)
         optimizer.step()
-        torch.save(model.state_dict(), args.model_path)
-
+        # torch.save(model.state_dict(), args.model_path)
+        torch.save(model.state_dict(), './models/cifar10.pth')
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} norm: {:.4f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                       100. * batch_idx / len(train_loader), loss.item(), batch_norm))
+                epoch, batch_idx * len(data), len(cifar10_train_loader.dataset),
+                       100. * batch_idx / len(cifar10_train_loader), loss.item(), batch_norm))
 
 
 def test(epoch):
@@ -101,7 +117,7 @@ def test(epoch):
     test_loss = 0
     correct = 0
 
-    for data, target in test_loader:
+    for data, target in cifar10_test_loader:
 
         if args.cuda:
             data, target = data.cuda(), target.cuda()
@@ -114,10 +130,10 @@ def test(epoch):
         pred = output.data.max(1)[1]
         correct += pred.eq(target.data).cpu().sum()
 
-    test_loss /= len(test_loader.dataset)
+    test_loss /= len(cifar10_test_loader.dataset)
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
+        test_loss, correct, len(cifar10_test_loader.dataset),
+        100. * correct / len(cifar10_test_loader.dataset)))
 
 
 for epoch in range(1, args.epochs + 1):

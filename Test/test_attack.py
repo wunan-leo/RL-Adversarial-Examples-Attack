@@ -111,10 +111,10 @@ def run(samples=10, targeted=True, attack_type='l2'):
     # add algorithm configuration as the param : config.
     start = 5
     inception = False
-    model_path = r'..\Models\models\mnist.pth'
+    model_path = r'../Models/models/mnist.pth'
     # prepare the data and model for attack, use param : model
     data = setup_mnist.MNIST()
-    model = lenet.LeNet()
+    model = lenet.LeNet(in_channels=1, out_size=1152)
     model.load_state_dict(torch.load(model_path))
     # prepare attack and inputs data.
     attack = create_attack(model, attack_type=attack_type)

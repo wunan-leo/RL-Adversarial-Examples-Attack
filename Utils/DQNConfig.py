@@ -1,0 +1,19 @@
+class Config:
+    frames: None
+    max_buff: None
+    state_dim: None
+    action_dim: None
+    learning_rate: None
+    use_cuda: None
+    epsilon_min: None
+    epsilon: None
+    eps_decay: None
+    batch_size: None
+    gamma: None
+    alpha: None
+    max_modify_num: None
+    update_tar_interval: None
+    print_interval: None
+    log_interval: None
+    win_break: None
+    output: None
