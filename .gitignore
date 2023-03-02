@@ -139,3 +139,6 @@ Models/data/*
 
 #data
 DataSets/*
+
+.vscode
+data

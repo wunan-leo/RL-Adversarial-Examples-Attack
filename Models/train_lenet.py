@@ -31,7 +31,7 @@ parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                     help='learning rate (default: 0.01)')
 parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                     help='SGD momentum (default: 0.5)')
-parser.add_argument('--no-cuda', action='store_true', default=True,
+parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
@@ -55,21 +55,21 @@ cifar10_transform = transforms.Compose([
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # 归一化 ，范围[-1,1]
 ])
 
-train_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('./data/', train=True, download=False,
-                   transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.1307,), (0.3081,))
-                   ])),
-    batch_size=args.batch_size, shuffle=True, **kwargs)
+# train_loader = torch.utils.data.DataLoader(
+#     datasets.MNIST('./data/', train=True, download=False,
+#                    transform=transforms.Compose([
+#                        transforms.ToTensor(),
+#                        transforms.Normalize((0.1307,), (0.3081,))
+#                    ])),
+#     batch_size=args.batch_size, shuffle=True, **kwargs)
 
-test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('./data/', train=False, download=False,
-                   transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.1307,), (0.3081,))
-                   ])),
-    batch_size=args.batch_size, shuffle=True, **kwargs)
+# test_loader = torch.utils.data.DataLoader(
+#     datasets.MNIST('./data/', train=False, download=False,
+#                    transform=transforms.Compose([
+#                        transforms.ToTensor(),
+#                        transforms.Normalize((0.1307,), (0.3081,))
+#                    ])),
+#     batch_size=args.batch_size, shuffle=True, **kwargs)
 
 cifar10_train_loader = torch.utils.data.DataLoader(
     datasets.CIFAR10('./data/', train=True, download=True,
@@ -96,7 +96,7 @@ def train(epoch):
     for batch_idx, (data, target) in enumerate(cifar10_train_loader):
         if args.cuda:
             data, target = data.cuda(), target.cuda()
-            centers = centers.cuda()
+            # centers = centers.cuda()
         data, target = Variable(data), Variable(target)
         optimizer.zero_grad()
         output = model(data)
@@ -105,12 +105,12 @@ def train(epoch):
         batch_norm = torch.nn.utils.clip_grad_norm(model.parameters(), 20, norm_type=2)
         optimizer.step()
         # torch.save(model.state_dict(), args.model_path)
-        torch.save(model.state_dict(), './models/cifar10.pth')
+        
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} norm: {:.4f}'.format(
                 epoch, batch_idx * len(data), len(cifar10_train_loader.dataset),
                        100. * batch_idx / len(cifar10_train_loader), loss.item(), batch_norm))
-
+    torch.save(model.state_dict(), 'Models/models/cifar10.pth')
 
 def test(epoch):
     model.eval()

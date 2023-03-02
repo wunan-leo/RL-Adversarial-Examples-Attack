@@ -1,12 +1,11 @@
 import numpy as np
 from torchvision import datasets, transforms
-
-from Utils import tool
 import math
 import torch
 from AttackEnv import AttackEnv
 from DQN import DQNAgent
-from Utils.DQNConfig import Config
+
+from Util.DQNConfig import Config
 
 
 class Trainer:
