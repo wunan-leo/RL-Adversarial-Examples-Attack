@@ -15,10 +15,10 @@ class Trainer:
         self.agent = agent
         self.env = env
         self.config = config
-        self.outputDir = self.config.output
+        self.output_dir = self.config.output
         # non-Linear epsilon decay
 
-    def resetFrame(self):
+    def reset_frame(self):
         epsilon_final = self.config.epsilon_min
         epsilon_start = self.config.epsilon
         epsilon_decay = self.config.eps_decay
@@ -27,7 +27,7 @@ class Trainer:
 
     def train(self, pre_fr=0):
 
-        train_data, test_data = self.load_data()
+        train_data, _ = self.load_data()
         attack_success_num = 0
         data_iter = iter(train_data)
         data, target = next(data_iter)
@@ -36,7 +36,7 @@ class Trainer:
         all_rewards = []
         episode_reward = 0
         ep_num = 0
-        self.resetFrame()
+        self.reset_frame()
         for fr in range(pre_fr + 1, self.config.frames + 1):
 
             epsilon = self.epsilon_by_frame(fr)
@@ -68,7 +68,7 @@ class Trainer:
                 ))
 
         print('Ran %d attack episodes, and the accuracy is %.4f' % (ep_num, attack_success_num / ep_num))
-        self.agent.save_model(self.outputDir, 'dqn-attack')
+        self.agent.save_model(self.output_dir, 'dqn-attack')
 
     def load_data(self):
         cifar10_transform = transforms.Compose([

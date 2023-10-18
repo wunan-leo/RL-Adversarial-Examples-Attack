@@ -68,7 +68,6 @@ class DQNAgent:
         self.config = config
         self.is_training = True
         self.buffer = ReplayBuffer(self.config.max_buff)
-        # self.model = CnnDQN(self.config.state_shape, self.config.action_dim)
         self.model = DQN(self.config.state_dim, self.config.action_dim)
         self.model_optim = Adam(self.model.parameters(), lr=self.config.learning_rate)
 

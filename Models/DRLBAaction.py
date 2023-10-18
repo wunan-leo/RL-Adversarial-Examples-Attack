@@ -18,12 +18,12 @@ class DRLBAaction:
         # MEAN = [-mean / std for mean, std in zip(mean, std)]
         # STD = [1 / std for std in std]
 
-        self.UNmean = [-1, -1, -1]
-        self.UNstd = [2, 2, 2]
+        self.un_mean = [-1, -1, -1]
+        self.un_std = [2, 2, 2]
         self.dtype = image.dtype
         self.device = image.device
-        UnNormalize = torchvision.transforms.Normalize(mean=self.UNmean, std=self.UNstd)
-        image1 = UnNormalize(image)
+        un_normalize = torchvision.transforms.normalize(mean=self.un_mean, std=self.un_std)
+        image1 = un_normalize(image)
 
         image_arr = image1.numpy().transpose(1, 2, 0)
 
@@ -142,25 +142,25 @@ class DRLBAaction:
 
         return img_out.astype(int)
 
-    def R(self, increment):
+    def r(self, increment):
         img_out = self.image * 1.0
         img_out[:, :, 0] = img_out[:, :, 0] * increment
 
         return img_out.astype(int)
 
-    def G(self, increment):
+    def g(self, increment):
         img_out = self.image * 1.0
         img_out[:, :, 1] = img_out[:, :, 1] * increment
 
         return img_out.astype(int)
 
-    def B(self, increment):
+    def b(self, increment):
         img_out = self.image * 1.0
         img_out[:, :, 2] = img_out[:, :, 2] * increment
 
         return img_out.astype(int)
 
-    def MeanFilter(self, size=3):
+    def mean_filter(self, size=3):
         h, w, c = self.image.shape
 
         image = self.image * 1.0
@@ -182,7 +182,7 @@ class DRLBAaction:
 
         return image_out.astype(int)
 
-    def WeightedMeanFilter(self):
+    def weightedmean_filter(self):
         h, w, c = self.image.shape
         size = 3  # 默认为3
         kernel = [[1, 2, 1], [2, 4, 2], [1, 2, 1]]  # 高斯滤波模板
@@ -206,7 +206,7 @@ class DRLBAaction:
 
         return image_out.astype(int)
 
-    def chooseAction(self, action_num):
+    def choose_action(self, action_num):
         self.action_num = action_num
         if self.action_num == 0:
             image = self.contrast(1.1)
@@ -221,28 +221,28 @@ class DRLBAaction:
         elif self.action_num == 5:
             image = self.brightness(0.9)
         elif self.action_num == 6:
-            image = self.R(1.1)
+            image = self.r(1.1)
         elif self.action_num == 7:
-            image = self.R(0.9)
+            image = self.r(0.9)
         elif self.action_num == 8:
-            image = self.G(1.1)
+            image = self.g(1.1)
         elif self.action_num == 9:
-            image = self.G(0.9)
+            image = self.g(0.9)
         elif self.action_num == 10:
-            image = self.B(1.1)
+            image = self.b(1.1)
         elif self.action_num == 11:
-            image = self.B(0.9)
+            image = self.b(0.9)
         elif self.action_num == 12:
-            image = self.MeanFilter()
+            image = self.mean_filter()
         elif self.action_num == 13:
-            image = self.WeightedMeanFilter()
+            image = self.weightedmean_filter()
         else:
             print("No such action!\n")
             return None
 
         img = np.array(image).transpose(2, 0, 1)  # 表示C x H x W
         img1 = torch.tensor(img / 255, dtype=self.dtype, device=self.device)
-        Normalize = torchvision.transforms.Normalize(mean=self.mean, std=self.std)#正常归一化
-        img_out=Normalize(img1)
+        normalize = torchvision.transforms.normalize(mean=self.mean, std=self.std)#正常归一化
+        img_out=normalize(img1)
 
         return img_out

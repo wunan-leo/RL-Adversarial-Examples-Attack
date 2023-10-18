@@ -12,7 +12,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-# from net_sphere import AngleLinear
 import numpy as np
 import math
 

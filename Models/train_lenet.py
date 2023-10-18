@@ -54,9 +54,9 @@ cifar10_transform = transforms.Compose([
     transforms.ToTensor(),  # numpy -> Tensor
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # 归一化 ，范围[-1,1]
 ])
-
+data_path = './data/'
 train_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('./data/', train=True, download=False,
+    datasets.MNIST(data_path, train=True, download=False,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
@@ -64,7 +64,7 @@ train_loader = torch.utils.data.DataLoader(
     batch_size=args.batch_size, shuffle=True, **kwargs)
 
 test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('./data/', train=False, download=False,
+    datasets.MNIST(data_path, train=False, download=False,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
@@ -72,12 +72,12 @@ test_loader = torch.utils.data.DataLoader(
     batch_size=args.batch_size, shuffle=True, **kwargs)
 
 cifar10_train_loader = torch.utils.data.DataLoader(
-    datasets.CIFAR10('./data/', train=True, download=True,
+    datasets.CIFAR10(data_path, train=True, download=True,
                      transform=cifar10_transform),
     batch_size=args.batch_size, shuffle=True, **kwargs)
 
 cifar10_test_loader = torch.utils.data.DataLoader(
-    datasets.CIFAR10('./data/', train=False, download=True,
+    datasets.CIFAR10(data_path, train=False, download=True,
                      transform=cifar10_transform),
     batch_size=args.batch_size, shuffle=True, **kwargs)
 
