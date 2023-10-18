@@ -14,7 +14,7 @@ from torch.autograd import Variable
 
 from attack import Attack
 
-from utils.CrossEntropyLoss import CrossEntropyLoss
+from Util.CrossEntropyLoss import CrossEntropyLoss
 
 
 class FGSM(Attack):

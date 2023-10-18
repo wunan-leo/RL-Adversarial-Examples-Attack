@@ -1,14 +1,17 @@
+import sys
+sys.path.append('./')
 import torch
 import argparse
 import random
 from torch import nn
-from Utils.ReplyBuffer import ReplayBuffer
-from Utils.DQNConfig import Config
 from torch.optim import Adam
-import Utils.tool as tool
 import train_DQN
+import test_DQN
 from AttackEnv import AttackEnv
 from lenet import LeNet
+from Util.DQNConfig import Config
+from Util.ReplyBuffer import ReplayBuffer
+import Util.tool as tool
 
 
 class DQN(nn.Module):
@@ -139,7 +142,7 @@ class DQNAgent:
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--train', dest='train', action='store_true', help='train model', default=True)
+    parser.add_argument('--train', dest='train', action='store_true', help='train model')
     parser.add_argument('--test', dest='test', action='store_true', help='test model')
     parser.add_argument('--model_path', type=str, help='if test, import the model')
     args = parser.parse_args()
@@ -151,7 +154,7 @@ if __name__ == '__main__':
     config.epsilon_min = 0.01
     config.eps_decay = 500
     config.frames = 160000
-    config.use_cuda = False
+    config.use_cuda = True
     config.learning_rate = 1e-3
     config.max_buff = 1000
     config.update_tar_interval = 100
@@ -164,10 +167,10 @@ if __name__ == '__main__':
     config.action_dim = 14
     config.state_dim = 6 * 32 * 32
     config.state_shape = [6, 32, 32]
-    config.output = r'./models/'
+    config.output = r'Models/models/'
 
     attacked_model = LeNet(in_channels=3, out_size=2048)
-    attacked_model_path = r'./models/cifar10.pth'
+    attacked_model_path = r'Models/models/cifar10.pth'
     attacked_model.load_state_dict(torch.load(attacked_model_path))
     env = AttackEnv(config, attacked_model)
     agent = DQNAgent(config)
@@ -176,9 +179,9 @@ if __name__ == '__main__':
         trainer = train_DQN.Trainer(agent, env, config)
         trainer.train()
 
-    # elif args.test:
-    #     if args.model_path is None:
-    #         print('please add the model path:', '--model_path xxxx')
-    #         exit(0)
-    #     tester = Tester(agent, env, args.model_path)
-    #     tester.test()
+    elif args.test:
+        if args.model_path is None:
+            print('please add the model path:', '--model_path xxxx')
+            exit(0)
+        tester = test_DQN.Tester(agent, env, args.model_path)
+        tester.test()

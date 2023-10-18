@@ -3,8 +3,8 @@ import numpy as np
 from gym import spaces
 import torch
 from skimage.metrics import structural_similarity as SSIM
-from Utils.DQNConfig import Config
-import Utils.tool as tool
+from Util.DQNConfig import Config
+import Util.tool as tool
 from DRLBAaction import DRLBAaction
 from torchvision import transforms
 
@@ -61,8 +61,8 @@ class AttackEnv(gym.Env):
         elif predict != self.origin_label and ssim >= self.alpha:
             # attack works
             reword = ssim + 1 * self.max_modify_num
-            if ssim > 0.9:
-                tool.show_img(torch.tensor(self.origin_image.numpy()[0]), torch.tensor(attack_image[0]))
+            # if ssim > 0.9:
+            #     tool.show_img(torch.tensor(self.origin_image.numpy()[0]), torch.tensor(attack_image[0]))
             self.current_num += 1
             done = True
         else:
